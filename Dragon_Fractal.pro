@@ -1,10 +1,12 @@
 TEMPLATE = app
 
 SOURCES += main.cpp \
-    game.cpp
+    game.cpp \
+    fractalsequence.cpp
 
 HEADERS += \
     game.h \
+    fractalsequence.h
 
 CONFIG += c++11
 

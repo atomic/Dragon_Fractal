@@ -1,0 +1,26 @@
+# Qt-es
+
+#decided to include Qt
+#*.pro
+*.h.autosave
+*.cpp.autosave
+*.pro.user
+*.pro.user.*
+moc_*.cpp
+qrc_*.cpp
+Makefile
+main
+*.txt.user
+*.txt.user*
+*-build-*
+*build*
+*.o
+
+*.exe
+*exe.core
+*.xmi
+
+
+#Sublime-Projects
+*.sublime-workspace
+*.sublime-project
