@@ -22,6 +22,7 @@ private:
     void					updateZoomDimension();
     void					updateVertices();
     void 				    prepareAnimation(sf::Time elapsedTime);
+    void 				    updatePhase();
 
 private:
     // Settings Default
@@ -41,6 +42,7 @@ private:
     static const float        angularFrameSpeed;
     sf::Time                  timeSinceLastUpdate;
     sf::Transform             mRotation;
+    sf::Vector2f              mRotationOrigin;
     bool                      mIsRotating;
     float                     mDegreesRotated;
 
