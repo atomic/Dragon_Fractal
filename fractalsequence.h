@@ -2,6 +2,10 @@
 #define FRACTALSEQUENCE_H
 #include <SFML/Graphics.hpp>
 
+
+typedef sf::Vector2f point;
+typedef std::vector<point> sequence;
+
 /**
  * @brief The class will be used to store the sequence of points generated at n iteration
  *
@@ -10,10 +14,8 @@
 class FractalSequence
 {
 private:
-    typedef size_t iteration;
-    iteration n;
-    sf::Vector2f<int> mSequence;
-    // To be implemented
+    size_t                 iteration;
+    sequence               mSequence;
 
 public:
     // TODO :
@@ -21,6 +23,13 @@ public:
     // 2. Define a function to generate/populate sequence for next iteration
     //
     FractalSequence();
+
+    void               Rotate();
+    const sequence &   getSeq()       { return mSequence;        }
+    const size_t       getIteration() { return iteration;        }
+    const size_t       getSize()      { return mSequence.size(); }
+    sf::Vector2f       getLastPoint();
+
     ~FractalSequence();
 };
 
