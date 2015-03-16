@@ -1,5 +1,7 @@
 #include "game.h"
 
+const sf::Time Game::TimePerFrame = sf::seconds(1.f/60.f); // 60 fps
+const float Game::angularFrameSpeed = 10;
 const sf::Vector2f Game::CENTER = sf::Vector2f(300,300);
 const sf::Vector2f Game::SCREENSIZE = sf::Vector2f(600,600);
 
@@ -10,8 +12,11 @@ const sf::Vector2f Game::SCREENSIZE = sf::Vector2f(600,600);
  */
 Game::Game()
     : mWindow(sf::VideoMode(SCREENSIZE.x, SCREENSIZE.y), "Dragon Fractal", sf::Style::Close)
-    , mVertices(sf::LinesStrip), zoomDim(10)
+    , mVertices(sf::LinesStrip), zoomDim(10), mIsRotating(false), mDegreesRotated(0)
 {
+    mFont.loadFromFile("../Dragon_Fractal/proximanova.ttf");
+    mTextIter.setFont(mFont);
+
     updateVertices();
     updateZoomDimension();
 }
@@ -21,10 +26,19 @@ Game::Game()
  */
 void Game::run()
 {
+    sf::Clock clock;
+    timeSinceLastUpdate = sf::Time::Zero;
     while (mWindow.isOpen())
     {
-        processEvents();
-        update();
+        sf::Time elapsedTime = clock.restart();
+        timeSinceLastUpdate += elapsedTime;
+        while (timeSinceLastUpdate > TimePerFrame)
+        {
+            timeSinceLastUpdate -= TimePerFrame;
+
+            processEvents();
+            update(TimePerFrame);
+        }
         render();
     }
 }
@@ -70,6 +84,9 @@ void Game::handlePlayerInput(sf::Keyboard::Key key, bool isPressed)
         updateVertices();
         updateZoomDimension();
     }
+    else if (key == sf::Keyboard::Tab &&isPressed) {
+        mIsRotating = !mIsRotating;
+    }
 }
 
 /**
@@ -89,11 +106,22 @@ void Game::updateVertices()
 }
 
 /**
+ * This is called every frame (depending on the time)
+ * @brief a function to render the animation of next degrees of rotation
+ */
+void Game::prepareAnimation(sf::Time elapsedTime)
+{
+    float frame_delta = angularFrameSpeed*elapsedTime.asSeconds();
+    mDegreesRotated += frame_delta;
+    mRotation.rotate(frame_delta, CENTER.x, CENTER.y); // for now test rotating about the center
+}
+
+/**
  * @brief Helper function to update how much zoom is needed at an iteration
  */
 void Game::updateZoomDimension()
 {
-    zoomDim = (mDragonSets.getIteration() + 1)*10;
+    zoomDim = pow(mDragonSets.getIteration() + 1, 2)*1; // need better function to approximate this changes
     mView.reset(sf::FloatRect( CENTER.x - zoomDim, CENTER.y - zoomDim,
                                zoomDim*2, zoomDim*2) );
 }
@@ -102,8 +130,12 @@ void Game::updateZoomDimension()
 /**
  * @brief update informations to next thread
  */
-void Game::update()
+void Game::update(sf::Time elapsedTime)
 {
+    if(mIsRotating) {
+        prepareAnimation(elapsedTime);
+        if(mDegreesRotated > 90) mIsRotating = false; // and reset other stuffs
+    }
 }
 
 /**
@@ -113,7 +145,10 @@ void Game::render()
 {
     mWindow.setView(mView);
     mWindow.clear();
-    mWindow.draw(mVertices);
+    if(mIsRotating)
+        mWindow.draw(mVertices, mRotation);
+    else
+        mWindow.draw(mVertices);
     mWindow.display();
 }
 

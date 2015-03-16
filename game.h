@@ -14,13 +14,14 @@ public:
 
 private:
     void					processEvents();
-    void					update();
+    void					update(sf::Time elapsedTime);
     void					render();
 
     void					handlePlayerInput(sf::Keyboard::Key key, bool isPressed);
 
     void					updateZoomDimension();
     void					updateVertices();
+    void 				    prepareAnimation(sf::Time elapsedTime);
 
 private:
     // Settings Default
@@ -34,6 +35,18 @@ private:
     sf::RenderWindow		  mWindow;
     sf::View         	      mView;
     sf::VertexArray           mVertices;
+
+    // Animation
+    static const sf::Time	  TimePerFrame;
+    static const float        angularFrameSpeed;
+    sf::Time                  timeSinceLastUpdate;
+    sf::Transform             mRotation;
+    bool                      mIsRotating;
+    float                     mDegreesRotated;
+
+    // Stats
+    sf::Font                  mFont;
+    sf::Text                  mTextIter;
 };
 
 #endif // GAME_H
