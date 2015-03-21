@@ -25,19 +25,45 @@ void FractalSequence::Rotate()
         //get the point
         X = mSequence[i].x;
         Y = mSequence[i].y;
+
         //change to the new system
-        X = X-x_turning;
-        Y = Y-y_turning;
+        X = X - x_turning;
+        Y = Y - y_turning;
         y_rotating = -X;
         x_rotating = Y;
+
         //change back to the original system
         y_rotating = y_rotating+y_turning;
         x_rotating = x_rotating+x_turning;
+
         //put the value into vector
         mSequence.push_back(sf::Vector2f(x_rotating,y_rotating));
     }
 
     iteration++;
+}
+
+/**
+ * @brief Reset the sets, and internal data
+ */
+void FractalSequence::Reset()
+{
+    mSequence.clear(); iteration = 0;
+    mSequence.push_back(point(0,0));
+    mSequence.push_back(point(1,0));
+}
+
+/**
+ * @brief Function to calculate the number of points for given iteration
+ * @param iteration points
+ * @return number of points
+ */
+size_t FractalSequence::getSizeAt(size_t atIteration)
+{
+    // tested, working
+    // series expansion 2 + 2*i_prev - 1, i_prev is defined recursively
+    if(atIteration == 0) return 2;
+    else return 2*getSizeAt(atIteration - 1) - 1;
 }
 
 /**

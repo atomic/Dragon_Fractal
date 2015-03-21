@@ -20,22 +20,26 @@ private:
     void					handlePlayerInput(sf::Keyboard::Key key, bool isPressed);
 
     void					updateZoomDimension();
-    void					updateVertices();
+//    void					updateVertices();
+    void					prepareSequenceAndVertices();
     void 				    prepareAnimation(sf::Time elapsedTime);
-    void 				    updatePhase();
+    void 				    updatePhase(bool isRewind = false);
+    void 				    reversePhase(bool fromOrigin = true);
 
 private:
     // Settings Default
     static const sf::Vector2f CENTER;
     static const sf::Vector2f SCREENSIZE;
+    static const size_t       MAXITER;
 
     FractalSequence           mDragonSets;
 
+
     // Graphics
-    size_t                    zoomDim; // keep track of how much screen is zoomed
     sf::RenderWindow		  mWindow;
+    size_t                    zoomDim; // keep track of how much screen is zoomed
     sf::View         	      mView;
-    sf::VertexArray           mVertices;
+    std::vector<sf::Vertex>   mVertices;
 
     // Animation
     static const sf::Time	  TimePerFrame;
@@ -44,7 +48,11 @@ private:
     sf::Transform             mRotation;
     sf::Vector2f              mRotationOrigin;
     bool                      mIsRotating;
+    bool                      mIsRewind;
+    bool                      mIsDrawn;
     float                     mDegreesRotated;
+    size_t                    mIteration;
+    size_t                    mCurrentSetSize;
 
     // Stats
     sf::Font                  mFont;
