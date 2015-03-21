@@ -1,10 +1,10 @@
 #include "game.h"
 
 const sf::Time Game::TimePerFrame   = sf::seconds(1.f/60.f); // 60 fps
-const float Game::angularFrameSpeed = 70;
+const float Game::angularFrameSpeed = 100;
 const sf::Vector2f Game::CENTER     = sf::Vector2f(300,300);
 const sf::Vector2f Game::SCREENSIZE = sf::Vector2f(1024,768);
-const size_t       Game::MAXITER    = 7;
+const size_t       Game::MAXITER    = 15;
 
 /** Iteration - # of Points  Table
     at 0 : 2
@@ -115,7 +115,6 @@ void Game::handlePlayerInput(sf::Keyboard::Key key, bool isPressed)
         case Keyboard::Tab:           mIsRotating = !mIsRotating; break;
         case Keyboard::BackSpace:
             mIsRewind   = mIteration > 0 ? !mIsRewind : mIsRewind;
-//            mDegreesRotated = 0; // this should not be the case
             break;
         case Keyboard::Up:     zoomDim *= 2        ; updateZoomDimension();                  break;
         case Keyboard::Down:   zoomDim /= 2        ; updateZoomDimension();                  break;
@@ -135,12 +134,24 @@ void Game::handlePlayerInput(sf::Keyboard::Key key, bool isPressed)
 void Game::prepareSequenceAndVertices()
 {
     size_t N = 0;
-    while(N++ < MAXITER)        // populate sequence first (see how long)
+                                    // +1 here to consider the reverse iteration
+    while(N++ < MAXITER + 1)        // populate sequence first (see how long)
         mDragonSets.Rotate(); // NOTE : alternatively, use multithreadin
     mVertices.clear();
+    // make different color for different iteration
+    N = 0; // reset depth
+    int upToPoint = mDragonSets.getSizeAt(N);
+    int i = 0; // keep track of points passed
+    srand(time(NULL));
+    sf::Color iterationColor = sf::Color(rand() % 230 + 25, rand() % 230 + 25, rand() % 230 + 25);
+
     for(point P : mDragonSets.getSeq()) // for every point in sequence
     {
-        mVertices.push_back(sf::Vertex(point(CENTER.x + P.x, CENTER.y - P.y), sf::Color::Green));
+        mVertices.push_back(sf::Vertex(point(CENTER.x + P.x, CENTER.y - P.y), iterationColor));
+        if(++i == upToPoint) {
+            iterationColor = sf::Color(rand() % 230 + 25, rand() % 230 + 25, rand() % 230 + 25);
+            upToPoint = mDragonSets.getSizeAt(++N);
+        }
     }
 }
 
@@ -171,12 +182,24 @@ void Game::updatePhase(bool isRewind)
     mIsRotating = true;
 }
 
+/** Animation
+ * @brief Function to handle what to do when iteration reach zero from rewind
+ *                 ---------------------------------------- end to rewind
+ */
+void Game::reversePhase(bool fromOrigin)
+{
+    mIsRewind = fromOrigin ? false : true;
+    mCurrentSetSize = fromOrigin ? 2 : mCurrentSetSize;
+    mRotationOrigin = fromOrigin ? mVertices[1].position : mVertices[mCurrentSetSize - 1].position;
+    mDegreesRotated = 0; mRotation = sf::Transform::Identity;
+}
+
 /** View
  * @brief Helper function to update how much zoom is needed at an iteration
  */
 void Game::updateZoomDimension()
 {
-//    zoomDim = pow(mDragonSets.getIteration() + 1, 2)*1; // need better function to approximate this changes
+    zoomDim = pow(mIteration + 2.15, 2); // need better function to approximate this changes
     mView.reset(sf::FloatRect( CENTER.x - zoomDim, CENTER.y - zoomDim,
                                zoomDim*2, zoomDim*2) );
     mIsDrawn = false;
@@ -191,12 +214,14 @@ void Game::update(sf::Time elapsedTime)
     if(mIsRotating) {
         prepareAnimation(elapsedTime);
         if(mDegreesRotated > 90) {
-            updatePhase(mIsRewind);
-            if(mIteration > MAXITER || mIteration == 0) {
-                mIsRewind = !mIsRewind;
-                mDegreesRotated = 0;
-            }
-            // if it reach limit points, either for rewind or not
+            updateZoomDimension();
+            if(mIteration == MAXITER && !mIsRewind) {
+                reversePhase(false); // reverse from end
+            } else if (mIteration == 0 && mIsRewind) {
+                // make new function to handle this
+                reversePhase(true); // reverse from origin
+            } else
+                updatePhase(mIsRewind); // not end or beginning
         }
     }
 }
@@ -220,14 +245,12 @@ void Game::render()
                     , mCurrentSetSize
                     , sf::LinesStrip, mRotation);
         }
-
         mIsDrawn = false;
     }
     // only draw when it's necessary (after zooming, rotating, etc)
     if(!mIsDrawn) {
         if(!mIsRotating) mWindow.clear();
         mWindow.draw(&mVertices[0], mCurrentSetSize, sf::LinesStrip);
-//        mWindow.draw(&mVertices[2], mDragonSets.getSizeAt(2) - mDragonSets.getSizeAt(1) + 1, sf::LinesStrip);
         mIsDrawn = true; // since in this case we don't draw anything new
     }
 //    mWindow.draw(mTextIter); // hard to draw

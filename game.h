@@ -24,6 +24,7 @@ private:
     void					prepareSequenceAndVertices();
     void 				    prepareAnimation(sf::Time elapsedTime);
     void 				    updatePhase(bool isRewind = false);
+    void 				    reversePhase(bool fromOrigin = true);
 
 private:
     // Settings Default
