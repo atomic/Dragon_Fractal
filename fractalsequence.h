@@ -25,9 +25,11 @@ public:
     FractalSequence();
 
     void               Rotate();
+    void               Reset();
     const sequence &   getSeq()       { return mSequence;        }
     const size_t       getIteration() { return iteration;        }
     const size_t       getSize()      { return mSequence.size(); }
+    const size_t       getSizeAt(size_t atIteration);
     sf::Vector2f       getLastPoint();
 
     ~FractalSequence();
