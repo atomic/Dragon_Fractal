@@ -1,12 +1,12 @@
 #include "game.h"
 
 const sf::Time Game::TimePerFrame   = sf::seconds(1.f/60.f); // 60 fps
-const float Game::angularFrameSpeed = 130;
+const float Game::angularFrameSpeed = 70;
 const sf::Vector2f Game::CENTER     = sf::Vector2f(300,300);
 const sf::Vector2f Game::SCREENSIZE = sf::Vector2f(1024,768);
-const size_t       Game::MAXITER    = 20;
+const size_t       Game::MAXITER    = 7;
 
-/**
+/** Iteration - # of Points  Table
     at 0 : 2
     at 1 : 3
     at 2 : 5
@@ -40,7 +40,7 @@ const size_t       Game::MAXITER    = 20;
  */
 Game::Game()
     : mWindow(sf::VideoMode(SCREENSIZE.x, SCREENSIZE.y), "Dragon Fractal", sf::Style::Close)
-    , zoomDim(10), mIsRotating(false), mIsDrawn(false), mDegreesRotated(0)
+    , zoomDim(10), mIsRotating(false), mIsRewind(false), mIsDrawn(false), mDegreesRotated(0)
     , mIteration(0), mCurrentSetSize(2)
 {
     mFont.loadFromFile("../Dragon_Fractal/proximanova.ttf");
@@ -97,6 +97,7 @@ void Game::processEvents()
         case sf::Event::Closed:
             mWindow.close();
             break;
+        default:                             break;
         }
     }
 }
@@ -110,34 +111,19 @@ void Game::handlePlayerInput(sf::Keyboard::Key key, bool isPressed)
     using namespace sf;
     if(isPressed) {
         switch (key) {
-        case Keyboard::Escape:        mWindow.close();     break;
-        case Keyboard::BackSpace:     mWindow.close();     break;
-        case Keyboard::Tab:           mIsRotating = !mIsRotating;                break;
-        case Keyboard::Up:     zoomDim *= 2        ; updateZoomDimension();      break;
-        case Keyboard::Down:   zoomDim /= 2        ; updateZoomDimension();      break;
+        case Keyboard::Escape:        mWindow.close();            break;
+        case Keyboard::Tab:           mIsRotating = !mIsRotating; break;
+        case Keyboard::BackSpace:
+            mIsRewind   = mIteration > 0 ? !mIsRewind : mIsRewind;
+//            mDegreesRotated = 0; // this should not be the case
+            break;
+        case Keyboard::Up:     zoomDim *= 2        ; updateZoomDimension();                  break;
+        case Keyboard::Down:   zoomDim /= 2        ; updateZoomDimension();                  break;
         default:
             break;
         }
     }
 }
-
-/** Logic
- * DEPRECIATED
- * @brief Function to reset vertices to get new sets of points
- *        NOTE: This function should not be used in new implementation
- */
-//void Game::updateVertices()
-//{
-//    exit(1); // **DEPRECIATED**
-//    mVertices.clear();    // for now, ignore efficiency
-//    mVertices.resize(mDragonSets.getSize());
-//    int i = 0;
-//    for(point N : mDragonSets.getSeq()) // for every point in sequence
-//    {
-//        mVertices[i].position = point(CENTER.x + N.x, CENTER.y - N.y); // SFML's y is inverted
-//        mVertices[i++].color  = sf::Color::Green;
-//    }
-//}
 
 /**
  * NOTE: Function will only be called once in one simulation
@@ -155,8 +141,6 @@ void Game::prepareSequenceAndVertices()
     for(point P : mDragonSets.getSeq()) // for every point in sequence
     {
         mVertices.push_back(sf::Vertex(point(CENTER.x + P.x, CENTER.y - P.y), sf::Color::Green));
-//        mVertices[i].position = point(CENTER.x + P.x, CENTER.y - P.y); // SFML's y is inverted
-//        mVertices[i++].color  = sf::Color::Green;
     }
 }
 
@@ -168,22 +152,22 @@ void Game::prepareAnimation(sf::Time elapsedTime)
 {
     float frame_delta = angularFrameSpeed*elapsedTime.asSeconds();
     mDegreesRotated  += frame_delta;
-    mRotation.rotate(frame_delta, mRotationOrigin); // for now test rotating about the center
+    mRotation.rotate(mIsRewind ? -frame_delta : frame_delta, mRotationOrigin);
+    // the direction of rotation depends on whether it's rewind or not
 }
 
 /** Animation
  * @brief Function will get new origin for the rotation, and other stuffs
  *        update mCurrentSetSize to reflect the size for current iteration
  */
-void Game::updatePhase()
+void Game::updatePhase(bool isRewind)
 {
-    mIteration++;
+    isRewind ? mIteration-- : mIteration++;
     mCurrentSetSize = mDragonSets.getSizeAt(mIteration);
     // setting up new origin, last point of certain iteration
     mRotationOrigin = mVertices[mCurrentSetSize - 1].position;
     mDegreesRotated = 0;
     mRotation = sf::Transform::Identity;
-//    updateZoomDimension(); // temporary, might switch to key based
     mIsRotating = true;
 }
 
@@ -206,11 +190,13 @@ void Game::update(sf::Time elapsedTime)
 {
     if(mIsRotating) {
         prepareAnimation(elapsedTime);
-        if(mDegreesRotated > 90 && mIteration < MAXITER) {
-            updatePhase();
-        } else if (mIteration == MAXITER) { // stop animation
-            mIsRotating = false;
-            mDegreesRotated = 0;
+        if(mDegreesRotated > 90) {
+            updatePhase(mIsRewind);
+            if(mIteration > MAXITER || mIteration == 0) {
+                mIsRewind = !mIsRewind;
+                mDegreesRotated = 0;
+            }
+            // if it reach limit points, either for rewind or not
         }
     }
 }
@@ -225,12 +211,23 @@ void Game::render()
     mWindow.setView(mView);
     if(mIsRotating) {
         mWindow.clear(); // improve performance?
-        mWindow.draw(&mVertices[0], mCurrentSetSize, sf::LinesStrip, mRotation);
+        if(!mIsRewind) {
+            mWindow.draw(&mVertices[0], mCurrentSetSize, sf::LinesStrip, mRotation);
+        }
+        else {
+            mWindow.draw(
+                        &mVertices[mCurrentSetSize - 1]
+                    , mCurrentSetSize
+                    , sf::LinesStrip, mRotation);
+        }
+
         mIsDrawn = false;
     }
+    // only draw when it's necessary (after zooming, rotating, etc)
     if(!mIsDrawn) {
         if(!mIsRotating) mWindow.clear();
         mWindow.draw(&mVertices[0], mCurrentSetSize, sf::LinesStrip);
+//        mWindow.draw(&mVertices[2], mDragonSets.getSizeAt(2) - mDragonSets.getSizeAt(1) + 1, sf::LinesStrip);
         mIsDrawn = true; // since in this case we don't draw anything new
     }
 //    mWindow.draw(mTextIter); // hard to draw

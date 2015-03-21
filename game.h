@@ -23,7 +23,7 @@ private:
 //    void					updateVertices();
     void					prepareSequenceAndVertices();
     void 				    prepareAnimation(sf::Time elapsedTime);
-    void 				    updatePhase();
+    void 				    updatePhase(bool isRewind = false);
 
 private:
     // Settings Default
@@ -35,8 +35,8 @@ private:
 
 
     // Graphics
-    size_t                    zoomDim; // keep track of how much screen is zoomed
     sf::RenderWindow		  mWindow;
+    size_t                    zoomDim; // keep track of how much screen is zoomed
     sf::View         	      mView;
     std::vector<sf::Vertex>   mVertices;
 
@@ -47,6 +47,7 @@ private:
     sf::Transform             mRotation;
     sf::Vector2f              mRotationOrigin;
     bool                      mIsRotating;
+    bool                      mIsRewind;
     bool                      mIsDrawn;
     float                     mDegreesRotated;
     size_t                    mIteration;

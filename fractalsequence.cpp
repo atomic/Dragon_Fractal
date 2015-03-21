@@ -58,7 +58,7 @@ void FractalSequence::Reset()
  * @param iteration points
  * @return number of points
  */
-const size_t FractalSequence::getSizeAt(size_t atIteration)
+size_t FractalSequence::getSizeAt(size_t atIteration)
 {
     // tested, working
     // series expansion 2 + 2*i_prev - 1, i_prev is defined recursively
