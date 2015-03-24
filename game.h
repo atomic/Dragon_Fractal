@@ -37,7 +37,7 @@ private:
 
     // Graphics
     sf::RenderWindow		  mWindow;
-    size_t                    zoomDim; // keep track of how much screen is zoomed
+    float                     zoomDim; // keep track of how much screen is zoomed
     sf::View         	      mView;
     std::vector<sf::Vertex>   mVertices;
 

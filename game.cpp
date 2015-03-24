@@ -143,13 +143,15 @@ void Game::prepareSequenceAndVertices()
     int upToPoint = mDragonSets.getSizeAt(N);
     int i = 0; // keep track of points passed
     srand(time(NULL));
-    sf::Color iterationColor = sf::Color(rand() % 230 + 25, rand() % 230 + 25, rand() % 230 + 25);
+//    sf::Color iterationColor = sf::Color(rand() % 200 + 55, rand() % 200 + 55, rand() % 200 + 55);
+    sf::Color iterationColor = sf::Color::Black;
 
     for(point P : mDragonSets.getSeq()) // for every point in sequence
     {
         mVertices.push_back(sf::Vertex(point(CENTER.x + P.x, CENTER.y - P.y), iterationColor));
         if(++i == upToPoint) {
-            iterationColor = sf::Color(rand() % 230 + 25, rand() % 230 + 25, rand() % 230 + 25);
+//            iterationColor = sf::Color(rand() % 200 + 55, rand() % 200 + 55, rand() % 200 + 55);
+            iterationColor = sf::Color::Black;
             upToPoint = mDragonSets.getSizeAt(++N);
         }
     }
@@ -199,7 +201,7 @@ void Game::reversePhase(bool fromOrigin)
  */
 void Game::updateZoomDimension()
 {
-    zoomDim = pow(mIteration + 2.15, 2); // need better function to approximate this changes
+    zoomDim = pow( 1.3, mIteration < 4 ? mIteration : mIteration*1.7) + 4.0; // need better function to approximate this changes
     mView.reset(sf::FloatRect( CENTER.x - zoomDim, CENTER.y - zoomDim,
                                zoomDim*2, zoomDim*2) );
     mIsDrawn = false;
@@ -235,7 +237,7 @@ void Game::render()
 {
     mWindow.setView(mView);
     if(mIsRotating) {
-        mWindow.clear(); // improve performance?
+        mWindow.clear(sf::Color::White); // improve performance?
         if(!mIsRewind) {
             mWindow.draw(&mVertices[0], mCurrentSetSize, sf::LinesStrip, mRotation);
         }
