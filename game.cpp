@@ -1,7 +1,7 @@
 #include "game.h"
 
 const sf::Time Game::TimePerFrame   = sf::seconds(1.f/60.f); // 60 fps
-const float Game::angularFrameSpeed = 100;
+const float Game::angularFrameSpeed = 50;
 const sf::Vector2f Game::CENTER     = sf::Vector2f(300,300);
 const sf::Vector2f Game::SCREENSIZE = sf::Vector2f(1024,768);
 const size_t       Game::MAXITER    = 15;
@@ -143,15 +143,15 @@ void Game::prepareSequenceAndVertices()
     int upToPoint = mDragonSets.getSizeAt(N);
     int i = 0; // keep track of points passed
     srand(time(NULL));
-//    sf::Color iterationColor = sf::Color(rand() % 200 + 55, rand() % 200 + 55, rand() % 200 + 55);
-    sf::Color iterationColor = sf::Color::Black;
+    sf::Color iterationColor = sf::Color(rand() % 200 + 55, rand() % 200 + 55, rand() % 200 + 55);
+//    sf::Color iterationColor = sf::Color::Black;
 
     for(point P : mDragonSets.getSeq()) // for every point in sequence
     {
         mVertices.push_back(sf::Vertex(point(CENTER.x + P.x, CENTER.y - P.y), iterationColor));
         if(++i == upToPoint) {
-//            iterationColor = sf::Color(rand() % 200 + 55, rand() % 200 + 55, rand() % 200 + 55);
-            iterationColor = sf::Color::Black;
+            iterationColor = sf::Color(rand() % 200 + 55, rand() % 200 + 55, rand() % 200 + 55);
+//            iterationColor = sf::Color::Black;
             upToPoint = mDragonSets.getSizeAt(++N);
         }
     }
@@ -199,9 +199,23 @@ void Game::reversePhase(bool fromOrigin)
 /** View
  * @brief Helper function to update how much zoom is needed at an iteration
  */
-void Game::updateZoomDimension()
+void Game::updateZoomDimension(sf::Time elapsedTime)
 {
-    zoomDim = pow( 1.3, mIteration < 4 ? mIteration : mIteration*1.7) + 4.0; // need better function to approximate this changes
+    // depending on how many degrees rotated, increase zoomDim proportional to it
+    int deltaDim;
+    if (mIsRewind) {
+        int rewindDim = mIteration + 1;
+        zoomDim   = pow( 1.3, rewindDim < 4 ? rewindDim   : rewindDim *1.4) + 4.0;
+        deltaDim  = pow( 1.3, mIteration < 4 ? mIteration : mIteration*1.4) + 4.0 - zoomDim;
+    } else {
+        zoomDim  = pow( 1.3, mIteration < 4 ? mIteration        :  mIteration*1.4) + 4.0;
+        deltaDim = pow(1.3, mIteration + 1 < 4 ? mIteration + 1 : (mIteration + 1)*1.4) + 4.0 - zoomDim;
+    }
+    zoomDim += mDegreesRotated/90 * deltaDim;
+
+//    if(!mIsRewind)
+//        zoomDim = pow( 1.3, mIteration < 4 ? mIteration : mIteration*1.6) + 4.0;
+//    { /// When rewing, the zoomDim has delay
     mView.reset(sf::FloatRect( CENTER.x - zoomDim, CENTER.y - zoomDim,
                                zoomDim*2, zoomDim*2) );
     mIsDrawn = false;
@@ -214,9 +228,9 @@ void Game::updateZoomDimension()
 void Game::update(sf::Time elapsedTime)
 {
     if(mIsRotating) {
+        updateZoomDimension(elapsedTime);
         prepareAnimation(elapsedTime);
         if(mDegreesRotated > 90) {
-            updateZoomDimension();
             if(mIteration == MAXITER && !mIsRewind) {
                 reversePhase(false); // reverse from end
             } else if (mIteration == 0 && mIsRewind) {
@@ -237,7 +251,7 @@ void Game::render()
 {
     mWindow.setView(mView);
     if(mIsRotating) {
-        mWindow.clear(sf::Color::White); // improve performance?
+        mWindow.clear(); // improve performance?
         if(!mIsRewind) {
             mWindow.draw(&mVertices[0], mCurrentSetSize, sf::LinesStrip, mRotation);
         }
@@ -255,6 +269,5 @@ void Game::render()
         mWindow.draw(&mVertices[0], mCurrentSetSize, sf::LinesStrip);
         mIsDrawn = true; // since in this case we don't draw anything new
     }
-//    mWindow.draw(mTextIter); // hard to draw
     mWindow.display();
 }

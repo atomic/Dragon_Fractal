@@ -19,7 +19,7 @@ private:
 
     void					handlePlayerInput(sf::Keyboard::Key key, bool isPressed);
 
-    void					updateZoomDimension();
+    void					updateZoomDimension(sf::Time elapsedTime = sf::Time::Zero);
 //    void					updateVertices();
     void					prepareSequenceAndVertices();
     void 				    prepareAnimation(sf::Time elapsedTime);
