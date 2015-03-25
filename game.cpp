@@ -1,7 +1,7 @@
 #include "game.h"
 
 const sf::Time Game::TimePerFrame   = sf::seconds(1.f/60.f); // 60 fps
-const float Game::angularFrameSpeed = 50;
+const float Game::angularFrameSpeed = 100;
 const sf::Vector2f Game::CENTER     = sf::Vector2f(300,300);
 const sf::Vector2f Game::SCREENSIZE = sf::Vector2f(1024,768);
 const size_t       Game::MAXITER    = 15;
@@ -143,14 +143,18 @@ void Game::prepareSequenceAndVertices()
     int upToPoint = mDragonSets.getSizeAt(N);
     int i = 0; // keep track of points passed
     srand(time(NULL));
-    sf::Color iterationColor = sf::Color(rand() % 200 + 55, rand() % 200 + 55, rand() % 200 + 55);
+//    sf::Color iterationColor = sf::Color(rand() % 200 + 55, rand() % 200 + 55, rand() % 200 + 55);
+    // darker color
+    sf::Color iterationColor = sf::Color(rand() % 200, rand() % 200, rand() % 200);
 //    sf::Color iterationColor = sf::Color::Black;
 
     for(point P : mDragonSets.getSeq()) // for every point in sequence
     {
         mVertices.push_back(sf::Vertex(point(CENTER.x + P.x, CENTER.y - P.y), iterationColor));
         if(++i == upToPoint) {
-            iterationColor = sf::Color(rand() % 200 + 55, rand() % 200 + 55, rand() % 200 + 55);
+//            iterationColor = sf::Color(rand() % 200 + 55, rand() % 200 + 55, rand() % 200 + 55);
+            //darker color
+            iterationColor = sf::Color(rand() % 200, rand() % 200, rand() % 200);
 //            iterationColor = sf::Color::Black;
             upToPoint = mDragonSets.getSizeAt(++N);
         }
@@ -175,13 +179,13 @@ void Game::prepareAnimation(sf::Time elapsedTime)
  */
 void Game::updatePhase(bool isRewind)
 {
+    mIsRotating = (mIteration == MAXITER ? false : true);
     isRewind ? mIteration-- : mIteration++;
     mCurrentSetSize = mDragonSets.getSizeAt(mIteration);
     // setting up new origin, last point of certain iteration
     mRotationOrigin = mVertices[mCurrentSetSize - 1].position;
     mDegreesRotated = 0;
     mRotation = sf::Transform::Identity;
-    mIsRotating = true;
 }
 
 /** Animation
@@ -209,7 +213,7 @@ void Game::updateZoomDimension(sf::Time elapsedTime)
         deltaDim  = pow( 1.3, mIteration < 4 ? mIteration : mIteration*1.4) + 4.0 - zoomDim;
     } else {
         zoomDim  = pow( 1.3, mIteration < 4 ? mIteration        :  mIteration*1.4) + 4.0;
-        deltaDim = pow(1.3, mIteration + 1 < 4 ? mIteration + 1 : (mIteration + 1)*1.4) + 4.0 - zoomDim;
+        deltaDim = pow(1.3,  mIteration + 1 < 4 ? mIteration + 1 : (mIteration + 1)*1.4) + 4.0 - zoomDim;
     }
     zoomDim += mDegreesRotated/90 * deltaDim;
 
@@ -224,6 +228,7 @@ void Game::updateZoomDimension(sf::Time elapsedTime)
 
 /**
  * @brief update informations to next thread
+ *        Handles phases and rotation mode
  */
 void Game::update(sf::Time elapsedTime)
 {
@@ -231,12 +236,12 @@ void Game::update(sf::Time elapsedTime)
         updateZoomDimension(elapsedTime);
         prepareAnimation(elapsedTime);
         if(mDegreesRotated > 90) {
-            if(mIteration == MAXITER && !mIsRewind) {
-                reversePhase(false); // reverse from end
-            } else if (mIteration == 0 && mIsRewind) {
-                // make new function to handle this
-                reversePhase(true); // reverse from origin
-            } else
+//            if(mIteration == MAXITER && !mIsRewind) {
+//                reversePhase(false); // reverse from end
+//            } else if (mIteration == 0 && mIsRewind) {
+//                // make new function to handle this
+//                reversePhase(true); // reverse from origin
+//            } else
                 updatePhase(mIsRewind); // not end or beginning
         }
     }
@@ -251,7 +256,8 @@ void Game::render()
 {
     mWindow.setView(mView);
     if(mIsRotating) {
-        mWindow.clear(); // improve performance?
+//        mWindow.clear(); // improve performance?
+        mWindow.clear(sf::Color::White);
         if(!mIsRewind) {
             mWindow.draw(&mVertices[0], mCurrentSetSize, sf::LinesStrip, mRotation);
         }
@@ -265,7 +271,7 @@ void Game::render()
     }
     // only draw when it's necessary (after zooming, rotating, etc)
     if(!mIsDrawn) {
-        if(!mIsRotating) mWindow.clear();
+        if(!mIsRotating) mWindow.clear(sf::Color::White);
         mWindow.draw(&mVertices[0], mCurrentSetSize, sf::LinesStrip);
         mIsDrawn = true; // since in this case we don't draw anything new
     }
