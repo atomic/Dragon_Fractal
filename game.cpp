@@ -1,7 +1,7 @@
 #include "game.h"
 
 const sf::Time Game::TimePerFrame   = sf::seconds(1.f/60.f); // 60 fps
-const float Game::angularFrameSpeed = 50;
+const float Game::angularFrameSpeed = 100;
 const sf::Vector2f Game::CENTER     = sf::Vector2f(300,300);
 const sf::Vector2f Game::SCREENSIZE = sf::Vector2f(1024,768);
 const size_t       Game::MAXITER    = 15;
@@ -39,7 +39,7 @@ const size_t       Game::MAXITER    = 15;
  *        and initialize objects
  */
 Game::Game()
-    : mWindow(sf::VideoMode(SCREENSIZE.x, SCREENSIZE.y), "Dragon Fractal", sf::Style::Close)
+    : mWindow(sf::VideoMode(SCREENSIZE.x, SCREENSIZE.y), "Dragon Fractal", sf::Style::Fullscreen)
     , zoomDim(10), mIsRotating(false), mIsRewind(false), mIsDrawn(false), mDegreesRotated(0)
     , mIteration(0), mCurrentSetSize(2)
 {
@@ -143,14 +143,16 @@ void Game::prepareSequenceAndVertices()
     int upToPoint = mDragonSets.getSizeAt(N);
     int i = 0; // keep track of points passed
     srand(time(NULL));
-    sf::Color iterationColor = sf::Color(rand() % 200 + 55, rand() % 200 + 55, rand() % 200 + 55);
+//    sf::Color iterationColor = sf::Color(rand() % 200 + 55, rand() % 200 + 55, rand() % 200 + 55);
+    sf::Color iterationColor = sf::Color(rand() % 200, rand() % 200, rand() % 200);
 //    sf::Color iterationColor = sf::Color::Black;
 
     for(point P : mDragonSets.getSeq()) // for every point in sequence
     {
         mVertices.push_back(sf::Vertex(point(CENTER.x + P.x, CENTER.y - P.y), iterationColor));
         if(++i == upToPoint) {
-            iterationColor = sf::Color(rand() % 200 + 55, rand() % 200 + 55, rand() % 200 + 55);
+//            iterationColor = sf::Color(rand() % 200 + 55, rand() % 200 + 55, rand() % 200 + 55);
+            iterationColor = sf::Color(rand() % 200, rand() % 200, rand() % 200);
 //            iterationColor = sf::Color::Black;
             upToPoint = mDragonSets.getSizeAt(++N);
         }
@@ -251,7 +253,7 @@ void Game::render()
 {
     mWindow.setView(mView);
     if(mIsRotating) {
-        mWindow.clear(); // improve performance?
+        mWindow.clear(sf::Color::White); // improve performance?
         if(!mIsRewind) {
             mWindow.draw(&mVertices[0], mCurrentSetSize, sf::LinesStrip, mRotation);
         }
@@ -265,7 +267,7 @@ void Game::render()
     }
     // only draw when it's necessary (after zooming, rotating, etc)
     if(!mIsDrawn) {
-        if(!mIsRotating) mWindow.clear();
+        if(!mIsRotating) mWindow.clear(sf::Color::White);
         mWindow.draw(&mVertices[0], mCurrentSetSize, sf::LinesStrip);
         mIsDrawn = true; // since in this case we don't draw anything new
     }
